@@ -1,0 +1,701 @@
+1 GCC G++:
+    - 解释：他们都属于编译器GCC通常用于编译c文件，G++通常用于编译.cpp文件
+    - 编译原理：对于源代码通常需要经历以下几个过程才能变为我们需要的可执行文件
+        - 预处理阶段：首先将源代码进行预处理 主要是将引入的头文件内容，注释内容，宏定义等进行删除和替换，一般会生成.i文件
+             -处理命令 gcc xx.c -E -o xx.i 如果是.cpp文件需要指定使用-lstdc++动态库进行编译
+                       g++ xx.cpp -E -o xx.i 
+        - 编译阶段：将预处理后的文件通过编译器进行编译 主要是对代码进行语法分析以确代码的正确性，一般对得到.s文件
+             -处理命令 gcc xx.c -S -o xx.s 如果是.cpp文件需要指定使用-lstdc++动态库进行编译
+                       g++ xx.cpp -S -o xx.s21109
+                       
+        - 汇编阶段 将编译后的文件通过汇编器处理得到.o文件,这都是机器可以看懂的二进制文件,
+             -处理命令 gcc xx.c -C -o xx.o 如果是.cpp文件需要指定使用-lstdc++动态库进行编译
+                        g++ xx.cpp -C -o xx.o
+        - 链接阶段 将汇编后的二进制文件通过连接器把它需要的动态库或者其他一些目标代码进行链接得到最终的out可执行文件
+             -处理命令 gcc xx.c -o xx.out 如果是.cpp文件需要指定使用-lstdc++动态库进行编译
+                        g++ xx.cpp -o xx.out
+    - 常用命令
+        - -l 要追加的库
+        - -I 指定include包含文件的搜索目录
+        - -L 指定编译的时候搜索的库路径
+        - -fpic 生成与位置无关的代码 一般创建动态链接库的时候会用
+        - -shared 生成共享目标文件
+        - -std 采用什么标准
+        - Wall 生成所有警告信息
+        - g 生成调试信息 可以用gdb调试
+        - D 在编译的时候指定一个宏
+        - W 不生成任何警告信息
+2 静态库的制作和使用：
+    - 静态库在程序的链接阶段被复制到了程序中；动态库在链接阶段没有被复制到程序中，而是程序在运行时由系统动态加
+      载到内存中供程序调用。
+    - 命名规则：lib+静态库名称.a 
+    - 静态库的制作：
+        - gcc获得.o文件 
+        - ar rcs libxxx.a xxx.o xxx.o
+3 动态库的制作和使用：
+    - 命名规则：lib+动态库名称.so
+    - 动态库的制作：
+        gcc -c -fpic a.c b.c
+        gcc -shared *.o -o libxxx.so
+    - 注意：如果要使用该动态库的话 我们需要将动态库的路径放置在环境变量中，这样才能确保可执行程序在执行
+      的时候可以找到我们需要的.so文件 它先后搜索elf文件的 DT_RPATH段 ——> 环境变量
+      LD_LIBRARY_PATH ——> /etc/ld.so.cache文件列表 ——> /lib/，/usr/lib目录找到库文件后将其载入内存。  
+        - 方法一：export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:当前的动态库的绝对路径
+            通过echo $环境变量名字 可以查看环境变量中的内容，该方法值针对当前终端有效
+        - 方法二：永久的使该配置有效 进入 ~/.bashrc文件 在末尾加入export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:当前的动态库的绝对路径
+            通过source .bashrc 使得该配置生效
+        - 方法三：进入 /etc/profile 文件 在末尾加入export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:当前的动态库的绝对路径
+            通过source /etc/profile 使得该配置生效
+        - 方法四: 进入 /etc/ld.so.conf 把动态库路径粘贴到该文件下
+4 IO函数
+    -open:用于创建打开一个文件标识符
+    -close:关闭文件
+    -read: 从文件标识符中读数据
+    -write: 向文件标识符中写数据
+    -lseek：
+        移动文件指针到头文件 lseek(fd,0,SEEK_SET);
+        获取当前文件指针的位置：lseek(fd,0,SEEK_CUR);
+        可以获取文件的长度：lseek(fd,0,SEEK_END);
+        拓展文件的长度，当前文件为10b 110b 增加了100个字节：lseek(fd,100,SEEK_END);
+        注意:需要写一次才管用
+    -stat: 可以获得一个文件的所有元数据等相关信息
+    -lstat: 可以获得链接的相关信息
+    -access: 判断文件是否有某个权限或者文件是否存在
+        R_OK：读权限
+        W_OK：写权限
+        X_OK：执行权限 
+        F_OK:文件是否存在
+    -chmod: 更改文件的权限 但mode的值需要与umask进行&操作
+    -chown：更改文件的所有权到其他用户中
+    -truncate:缩减或者扩张文件的尺寸到指定的大小
+    -rename:用于重命名文件或者目录
+    -chdir:修改进程的工作目录
+    -getcwd:获取当前的工作目录
+    -mkdir:创建新的目录
+    -rmdir:删除指定路径的目录
+    -opendir:打开文件目录
+    -readdir:获得当前文件夹的信息
+    -closedir:关闭该目录
+    -dup2:重定向文件描述符
+4 进程：
+    fork():创建一个子进程,返回值大于0表示为父进程,返回值=0表示为子进程
+5 exec函数族:
+    int execl(const char *pathname, const char *arg, ... );
+    - 参数：
+        - path: 需要指定的执行的文件路径或者名称 a.out /home/wangtao/a.out 推荐使用绝对路径
+        - arg: 执行可执行文件所需要的参数列表
+            第一个参数一般没有什么作用 为了方便 一般写的是执行的程序的名称
+            从第二个参数开始就是程序执行所需要的列表
+            参数最后需要以NULL结束(哨兵)
+    - 返回值：
+        只有调用错误时才会有返回值 返回-1 并且设置errno
+    int execlp(const char *file, const char *arg, ...);
+    - 会到环境变量中查找指定的可执行文件
+    - 参数：
+        - file:需要执行的可执行文件的文件名
+        - arg: 执行可执行文件所需要的参数列表
+            第一个参数一般没有什么作用 为了方便 一般写的是执行的程序的名称
+            从第二个参数开始就是程序执行所需要的列表
+            参数最后需要以NULL结束(哨兵)
+    - 返回值：
+        只有调用错误时才会有返回值 返回-1 并且设置errno
+6 进程退出:
+    pid_t wait(int *wstatus);
+    功能：等待任意一个子进程结束，如何任意一个子进程结束了，该函数会回收子进程的资源
+    参数: int *wstatus
+    进程退出的状态信息，传入的是一个int类型的地址，传出参数
+    返回值：
+        - 成功 返回的子进程的id
+        - 失败 返回-1(所有的子进程都结束 调用函数失败)
+    调用wait函数的进程会被挂起(阻塞),直到它的一个子进程退出或者收到一个不能被忽略的信号时才被唤醒(相当于继续往下执行)
+    如果没有子进程，函数立刻返回，返回-1 如果子进程都已经结束了，也会立即返回 返回-1
+    pid_t waitpid(pid_t pid, int *wstatus, int options);
+    功能：回收指定进程号的子进程,可以设置非阻塞
+    参数：
+        - pid:
+            pid>0:某个子进程的pid
+            pid=0:表示回收当前进程组的所有子进程    (也会用)
+            pid=-1:回收所有的子进程，相当于调用wait() (最常用)
+            pid<-1:回收某个进程组的组id的绝对值,回收指定进程组中的子进程
+        - options:设置阻塞和非阻塞
+            0：阻塞
+            WNOHANG:非阻塞
+    返回值: 
+        >0:返回子进程的id
+        =0:非阻塞的情况下：表示还有子进程活着
+        =-1：错误，或者没有子进程活着
+7 孤儿进程，僵尸进程；
+    孤儿进程：
+        父进程运行结束，但子进程还在运行（未运行结束），这样的子进程就称为孤儿进程（Orphan Process）。
+        每当出现一个孤儿进程的时候，内核就把孤儿进程的父进程设置为 init ，而 init 进程会循环地 wait() 它的已经退出的子进程。
+        这样，当一个孤儿进程凄凉地结束了其生命周期的时候，init 进程就会代表党和政府出面处理它的一切善后工作。
+        因此孤儿进程并不会有什么危害。
+    僵尸进程：
+        每个进程结束之后, 都会释放自己地址空间中的用户区数据，内核区的 PCB 没有办法自己释放掉，需要父进程去释放。
+        进程终止时，父进程尚未回收，子进程残留资源（PCB）存放于内核中，变成僵尸（Zombie）进程。
+        僵尸进程不能被 kill -9 杀死，这样就会导致一个问题，如果父进程不调用 wait() 或 waitpid() 的话，那么保留的
+        那段信息就不会释放，其进程号就会一直被占用，但是系统所能使用的进程号是有限的，如果大量的产生僵尸进程，将因为
+        没有可用的进程号而导致系统不能产生新的进程，此即为僵尸进程的危害，应当避免。
+8 进程间通信:
+    匿名管道:(需要有父子关系)
+        int pipe(int pipechildfd[2]);
+        作用：创建一个匿名管道
+        参数：int pipechildfd[2]这个数组是一个传出参数
+            pipechildfd[0]对应的是管道的读端
+            pipechildfd[1]对应的是管道的写端
+        返回值：
+            成功：0
+            失败：-1
+        管道是默认阻塞的：如果管道中没有数据 read阻塞，如果管道满了 write阻塞
+        注意：匿名管道只能用于具有关系的进程之间的通信(父子进程，兄弟进程)
+    有名管道:
+        通过系统函数：int mkfifo(const char *pathname, mode_t mode);
+        参数：
+            - pathname:管道名称的路径
+            - mode:文件的权限 和open的mode是一样的
+    内存映射：
+        内存映射是将磁盘文件的数据映射到内存，用户通过修改内存就能够修改磁盘文件
+        void *mmap(void *addr, size_t length, int prot, int flags,int fd, off_t offset);
+            - 功能：将一个文件或者设备的数据映射到内存中
+            - 参数：
+                - void*addr:NULL 有内核决定
+                - length: 要映射的数据的长度 这个值不能为零 建议使用文件的长度
+                    获取文件的长度：stat lseek
+                - prot: 对申请的内存映射区的操作权限
+                    PROT_EXEC  可执行权限
+                    PROT_READ  读权限
+                    PROT_WRITE 写权限
+                    PROT_NONE  没有权限
+                    要操作映射区映射内存 必须要有读取权限
+                    PROT_READ PROT_READ|PROT_WRITE(一般都选择这个)
+                - flags:
+                    - MAP_SHARED:映射区的数据会自动和磁盘文件进行同步必须要设置这个选项
+                    - MAP_PRIVATE:不同步 内存映射去的数据改变了，对原来的文件不会修改 会重新创建一个新的文件
+                - fd: 我们需要映射的文件描述符号 通过open得到
+                    - 注意：文件的大小不能为零 open指定的权限不能和port参数有冲突
+                        PORT:PORT_READ open:只读/读写 
+                        PORT:PORT_READ|PORT_WRITE open:读写
+                - offset: 偏移量 一般不用 必须指定4k的整数倍
+            - 返回创建的内存的首地址 失败返回 MAP_FAILED
+        int munmap(void *addr, size_t length);
+            - 功能：释放内存映射
+            - 参数：
+                - addr: 要释放的内存的首地址
+                - length: 要释放的内存的大小，要和mmap函数中的length参数的值一样
+        使用内存映射实现进程间通信：
+        1有关系的进程(父子进程)
+            - 还没有子进程的时候创建一个内存映射区 
+            - 有了内存映射区后创建子进程
+            - 父子进程共享创建的内存映射区
+        2没有关系的进程间同行
+            - 准备一个大小不是零的磁盘文件
+            - 进程1 通过磁盘文件创建内存映射区
+                - 得到一个操作这块内存的指针
+            - 进程2 通过磁盘文件创建内存映射区
+                - 得到一个操作这块内存的指针
+            - 使用内存映射区通信
+        注意：内存映射区是非阻塞的
+    信号:
+        int kill(pid_t pid, int sig);
+            - 功能：给任何的进程或者进程组发送pid 发送某个信号 sig
+            - 参数： 
+                -pid:需要发送给的进程的id
+                    >0:将信号发送给指定的进程
+                    =0；将信号发送给当前的进程组
+                    =-1：将信号发送给每一个有权限接受这个信号的进程
+                    <-1: 这个pid=某个进程组的ID取反
+                -sig:需要发送信号的编号(尽量使用宏值)0表示不发送任何信号
+            kill(getppid(),9)
+            kill(getpid(),9)
+        int raise(int sig);
+            - 功能：给当前进程发送信号
+            - 参数：
+                -sig:要发送的信号
+            - 返回值：
+                - 成功 0
+                - 失败 非0
+        void abort(void);
+            - 功能：发送SIGABRT信号给当前的进程,杀死当前进程
+            kill(getpid(),SIGABRT)
+        unsigned int alarm(unsigned int seconds);
+            - 功能：设置定时器(闹钟) 函数调用开始倒计时 当倒计时为0的时候
+                    函数会给当前进程发送信号SIGALARM
+            - 参数：
+                seconds:倒计时的时长，单位：秒 如果参数为0 定时器无效
+                        取消一个定时器 通过alarm(0)
+            - 返回值：
+                - 之前没有定时器，返回0
+                - 之前有定时器，返回之前的定时器剩余的时间
+            - SLGALARM: 默认终止当前的进程，每一个进程都有且只有一个定时器
+                alarm(10); ->返回0
+                过了1秒
+                alarm(5);  ->返回9
+            - 注意：该函数不阻塞的
+        int setitimer(int which, const struct itimerval *new_value,struct itimerval *old_value);
+            - 功能:设置定时器(闹钟)，可以替代alarm函数 精度比alarm高 微妙 实现周期性的定时
+            - 参数：
+                - which：定时器以什么时间计时
+                    ITIMER_REAL:真实时间，时间到达，发送SIGALARM 常用
+                    ITIMER_VIRTUAL:用户时间，时间到达，发送SIGVTALRM
+                    ITIMER_PROF:以该进程以用户态和内核态下所消耗的时间来计算，时间到达，发送SIGPROF
+                - *new_value:设置定时器的属性
+                    struct itimerval {//定时器的结构体
+                        struct timeval it_interval; //每个阶段的时间，间隔时间
+                        struct timeval it_value;    //延迟多长时间执行定时器
+                    };
+                    struct timeval {//时间的结构体
+                        time_t      tv_sec;         //秒数
+                        suseconds_t tv_usec;        //微妙
+                    };
+                    过10秒后，每隔2秒定时一次
+                - *old_value:记录上一次定时的时间参数 一般不使用 指定NULL
+                - 返回值：
+                    成功：0
+                    失败：-1
+    信号捕捉函数:
+        sighandler_t signal(int signum, sighandler_t handler);
+            - 功能：设置某个信号的捕捉行为
+            - 参数：
+                - signum:要捕捉信号
+                - handler：捕捉到信号要如何处理
+                    - SIG_IGN: 忽略信号
+                    - SIG_DFL: 使用信号默认的行为
+                    - 回调函数: 这个函数是内核调用 程序员只负责写 捕捉到信号后如何处理信号
+                    回调函数：
+                        - 需要程序员实现，提前准备号的，函数的类型根据实际需求，看函数指针的定义
+                        - 不是程序员调用，而是当信号产生，由内核调用
+                        - 函数指针是实现回调的手段，函数实现之后，将函数名放在函数指针的位置
+            - 返回值:
+                成功，返回上一次注册的信号处理函数的地址，第一次调用返回NULL
+                失败, 返回SIG_ERR,设置错误号
+        int sigaction(int signum, const struct sigaction *act,struct sigaction *oldact);
+            - 功能:检查或者改变信号的处理 信号捕捉
+            - 参数:
+                - signum:需要捕捉的信号的编号或者宏值
+                - *act: 捕捉到信号之后的处理动作
+                - oldact: 上一次对信号捕捉相关的设置 一般不适用 传递 NULL
+            - 返回值:
+                成功 0
+                失败 -1
+            struct sigaction {
+                //函数指针 指向的函数是信号捕捉到之后的处理函数
+                void     (*sa_handler)(int);
+                //函数指针 不常用
+                void     (*sa_sigaction)(int, siginfo_t *, void *);
+                //临时阻塞信号集 信号捕捉函数执行过程中 临时阻塞某些信号
+                sigset_t   sa_mask;
+                //使用哪一个信号处理对捕捉的信号进行处理
+                //这个值可以是0 表示使用 sa_handler 也可以是 SA_SIGINFO表示使用sa_sigaction 
+                int        sa_flags;
+                //被废弃掉了
+                void     (*sa_restorer)(void);
+            };
+            - 注意:应该尽量使用sigaction()因为signal()是ANSI美国国家标准定义的，有些架构已经废弃
+    信号集相关:
+        int sigemptyset(sigset_t *set);
+            - 功能: 清空信号集中的数据 将信号集中的所有的标志位置为0
+            - 参数：set 传出参数 需要造作的信号集
+            - 返回值：0 成功 -1 失败
+        int sigfillset(sigset_t *set);
+            - 功能: 将信号集中的所有的标志为置为1
+            - 参数：set 传出参数 需要造作的信号集
+            - 返回值：0 成功 -1 失败
+        int sigaddset(sigset_t *set, int signum);
+            - 功能: 设置信号集中的某一个对应得标志位为1 表示阻塞这个信号
+            - 参数：
+                - set 传出参数 需要造作的信号集
+                - signum:需要设置阻塞的那个信号
+            - 返回值：0 成功 -1 失败
+        int sigdelset(sigset_t *set, int signum);
+            - 功能: 设置信号集中的某一个对应得标志位为0 表示不阻塞这个信号
+            - 参数：
+                - set 传出参数 需要造作的信号集
+                - signum:需要设置不阻塞的那个信号
+            - 返回值：0 成功 -1 失败
+        int sigismember(const sigset_t *set, int signum);
+            - 功能: 判断某个信号是否阻塞
+            - 参数：
+                - set 需要操作的信号集
+                - signum:需要设置阻塞的那个信号
+            - 返回值：
+                - 1：signum被阻塞
+                - 0：signum不阻塞
+                - -1：signum调用失败
+        int sigprocmask(int how, const sigset_t *set, sigset_t *oldset);
+            - 功能: 将自定义信号集中的数据设置到内核中(设置阻塞，解除阻塞，替换)
+            - 参数:
+                - how: 如何对内核阻塞信号集进行处理
+                    SIG_BLOCK:将用户设置的阻塞信号集添加到内核中，内核原来的数据不变
+                        假设内核中默认的阻塞信号集是mask: mask|set
+                    SIG_UNBLOCK:根据用户设置的数据,对内核中的数据进行解除阻塞
+                        mask &=~set
+                    SIG_SETMASK:覆盖内核中原来的值
+                - set:已经初始化号的用户自定义的信号集
+                - oldset:保存设置之前的内核中的阻塞信号集的状态 可以是NULL
+            - 返回值：
+                成功：0
+                失败：-1
+        int sigpending(sigset_t *set);
+            - 功能：获取内核中的未决信号集
+            - 参数：set 传出参数 返回内核中的未决信号集
+    共享内存:
+        int shmget(key_t key, size_t size, int shmflg);
+            - 功能: 创建一个新的共享内存段，或者获取一个既有的共享内存段的标识
+                新创建的内存段中的数据都会被初始化为0
+            - 参数：
+                - key: key_t类型是一个整形，通过这个找到或者创建一个共享内存
+                        一般用16进制表示 非零值
+                - size: 共享内存的大小
+                - shmflg: 属性
+                    - 访问权限
+                    - 附加属性：创建/判断共享内存是不是存在
+                        - 创建：IPC_CREAT
+                        - 判断共享内存是否存在：IPC_EXCL 需要和IPC_CREAT一起使用
+                            IPC_CREAT|IPC_EXCL|0664
+            - 返回值：
+                失败：-1 设置错误号
+                成功：>0 返回共享内存的ID 后面操作共享内存的ID
+        void *shmat(int shmid, const void *shmaddr, int shmflg);
+            - 功能：和当前的进程进行关联
+            - 参数：   
+                - shmid: 共享内存的标识(ID) 由shmget返回值获取
+                - shmaddr: 申请的共享内存的起始地址,指定NULL,内核地址
+                - shmflg: 对共享内存的操作
+                    - 读：SHM_RDONLY，必须要有读权限
+                    - 读写： 0
+            - 返回值：
+                成功：返回共享内存的首地址 
+                失败：返回(void *) -1
+        int shmdt(const void *shmaddr);
+            - 功能: 解除当前进程和共享内存的关联
+            - 参数：    
+                shmaddr: 共享内存的首地址
+            - 返回值：
+                成功：0
+                失败：-1
+        int shmctl(int shmid, int cmd, struct shmid_ds *buf);
+            - 功能: 删除共享内存，共享内存要删除才会消失，创建共享内存的进程对共享内存没有影响
+            - 参数：
+                - shmid: 共享内存的ID
+                - cmd:  要做的操作
+                    - IPC_STAT:获取共享内存的当前的状态
+                    - IPC_SET: 设置共享内存的状态
+                    - IPC_RMID: 标记共享内存被销毁
+                - buf: 需要设置或者获取的共享内存的属性信息
+                    - IPC_STAT:buf存储数据
+                    - IPC_SET:buf中需要初始化数据设置到内核中
+                    - IPC_RMID: 没有用，NULL    
+            struct shmid_ds {
+                struct ipc_perm shm_perm;    /* Ownership and permissions */
+                size_t          shm_segsz;   /* Size of segment (bytes) */
+                time_t          shm_atime;   /* Last attach time */
+                time_t          shm_dtime;   /* Last detach time */
+                time_t          shm_ctime;   /* Creation time/time of last
+                                                modification via shmctl() */
+                pid_t           shm_cpid;    /* PID of creator */
+                pid_t           shm_lpid;    /* PID of last shmat(2)/shmdt(2) */
+                shmatt_t        shm_nattch;  /* No. of current attaches */
+            };
+
+        key_t ftok(const char *pathname, int proj_id);
+            - 功能：根据指定的路径名，和int值 生成一个共享内存的key
+            - 参数：    
+                -pathname:指定一个存在的路径
+                    /home/wangtao/Linux/a.txt
+                -proj_id:int类型的值 但是这个系统调用指挥使用其中的1一个字节
+                    范围： 0-255 一般指定一个字符 'A'
+        问题1：操作系统如何知道一块共享内存被多少进程关联
+            - 共享内存维护了一个结构体struct shmid_ds 这个结构体中有一个成员 shm_nattch
+            - shm_nattch记录了关联的进程个数
+        问题2: 可不可以对共享内存进行多次删除 shmctl
+            - 可以的
+            - 因为shmctl 标记删除共享内存 不是直接删除
+            - 什么时候真正删除呢：
+                当和共享内存关联的进程数为0的时候，就真正被删除
+            - 当共享内存的key为0的时候
+                共享内存被标记删除了，
+                如果一个进程和共享内存取消关联，那么这个进程就不能继续操作这个共享内存了
+        共享内存和内存映射的区别：
+            1.共享内存可以直接创建，内存映射需要磁盘文件(匿名映射除外)
+            2.共享内存效率更高
+            3.内存
+                所有的进程操作的是同一块共享内存
+                内存映射，每个进程在自己的虚拟地址空间中有一个独立的内存
+            4.数据安全
+                进程突然退出
+                    共享内存还存在
+                    内存映射消失
+                运行进程电脑死机
+                    数据存在共享内存中没有了
+                    内存映射中的数据由于磁盘文件中的数据还在，所以内存映射区的数据还存在
+            5.生命周期:
+                - 内存映射区：进程退出 内存映射区销毁
+                - 共享内存：进程退出 共享内存还存在，手动删除，或者关机
+                    如果一个进程退出，会自动和共享内存进行取消关联
+
+            tty:可以查看当前的进程，echo $$:是指当前进程ID
+            程序+&可以使程序在后台运行 
+            bg可以将运行在后台的程序调回前台
+    消息队列:
+        #include <sys/types.h>
+        #include <sys/ipc.h>
+        #include <sys/msg.h>
+        int msgget(key_t key, int msgflg);
+            -功能:获得一个与key值有关的消息队列，给队列中的内存不仅与该key标识之前的数据相关，同样也可以创建新的集合
+            -参数:
+                -key:用于标识唯一的消息对立额，不同的消息队列可以使用不同的KEY来区分，可以使用ftok()函数来生成唯一的key
+                -msgflg:
+                    IPC_CREAT
+                    IPC_EXCL
+            -返回值；
+                成功：返回该消息队列的唯一标识符
+                失败：返回-1
+        int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
+            -功能：用于在消息队列中发送消息
+            -参数：
+                - msqid:消息队列的标识符
+                - msgp:这是一个指向消息缓冲区的指针，其中包含要发送的消息。
+                struct msgbuf {
+                    long mtype;      
+                    char mtext[1];    
+                };
+                - msgsz:这是消息的大小，以字节为单位
+                - msgflg:这是一组标志，用于指定消息发送的行为。常见的标志包括
+                    IPC_NOWAIT：如果消息队列已满，不要阻塞，立即返回错误。
+                    0：阻塞模式，如果消息队列已满，等待直到有足够的空间发送消息。
+            -返回值：
+                成功：0
+                失败：-1
+        ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp,int msgflg);
+            -功能：用于消息队列数据的接受
+            -参数：
+                -msqid：消息队列的标识符
+                -msgp：这是一个指向消息缓冲区的指针，用于存储接收到的消息内容
+                -msgsz:缓冲区的大小
+                -msgtype:消息类型
+                    >0:函数将尝试接收与给定类型匹配的第一条消息
+                    =0:函数将接收队列中的第一条消息
+                    <0:函数将尝试接收小于或等于 msgtyp 绝对值的最小消息类型
+                -msgflg:
+                    IPC_NOWAIT：如果消息队列为空，不要阻塞，立即返回错误。
+                    MSG_EXCEPT：接收队列中不与 msgtyp 匹配的第一条消息。
+            -返回值:
+                成功：返回实际接收到的字节数
+                失败：-1
+9 信号：
+    //信号设置
+    #include <sys/types.h>
+    #include <signal.h>
+    int kill(pid_t pid, int sig);
+        - 功能：给任何的进程或者进程组发送pid 发送某个信号 sig
+        - 参数： 
+            -pid:需要发送给的进程的id
+                >0:将信号发送给指定的进程
+                =0；将信号发送给当前的进程组
+                =-1：将信号发送给每一个有权限接受这个信号的进程
+                <-1: 这个pid=某个进程组的ID取反
+            -sig:需要发送信号的编号(尽量使用宏值)0表示不发送任何信号
+        kill(getppid(),9)
+        kill(getpid(),9)
+    int raise(int sig);
+        - 功能：给当前进程发送信号
+        - 参数：
+            -sig:要发送的信号
+        - 返回值：
+            - 成功 0
+            - 失败 非0
+    void abort(void);
+        - 功能：发送SIGABRT信号给当前的进程,杀死当前进程
+        kill(getpid(),SIGABRT)
+    //定时器 第二个函数可以设置周期性函数
+    unsigned int alarm(unsigned int seconds);
+        - 功能：设置定时器(闹钟) 函数调用开始倒计时 当倒计时为0的时候
+                函数会给当前进程发送信号SIGALARM
+        - 参数：
+            seconds:倒计时的时长，单位：秒 如果参数为0 定时器无效
+                    取消一个定时器 通过alarm(0)
+        - 返回值：
+            - 之前没有定时器，返回0
+            - 之前有定时器，返回之前的定时器剩余的时间
+        - SLGALARM: 默认终止当前的进程，每一个进程都有且只有一个定时器
+            alarm(10); ->返回0
+            过了1秒
+            alarm(5);  ->返回9
+        - 注意：该函数不阻塞的
+    int setitimer(int which, const struct itimerval *new_value,struct itimerval *old_value);
+        - 功能:设置定时器(闹钟)，可以替代alarm函数 精度比alarm高 微妙 实现周期性的定时
+        - 参数：
+            - which：定时器以什么时间计时
+                ITIMER_REAL:真实时间，时间到达，发送SIGALARM 常用
+                ITIMER_VIRTUAL:用户时间，时间到达，发送SIGVTALRM
+                ITIMER_PROF:以该进程以用户态和内核态下所消耗的时间来计算，时间到达，发送SIGPROF
+            - *new_value:设置定时器的属性
+            struct itimerval {//定时器的结构体
+                struct timeval it_interval; //每个阶段的时间，间隔时间
+                struct timeval it_value;    //延迟多长时间执行定时器
+            };
+            struct timeval {//时间的结构体
+                time_t      tv_sec;         //秒数
+                suseconds_t tv_usec;        //微妙
+            };
+            过10秒后，每隔2秒定时一次
+            - *old_value:记录上一次定时的时间参数 一般不使用 指定NULL
+        - 返回值：
+            成功：0
+            失败：-1
+    //信号捕捉函数: 注意signal是ANSI的标准 可以弃用
+    #include <signal.h>
+    typedef void (*sighandler_t)(int);
+    sighandler_t signal(int signum, sighandler_t handler);
+        - 功能：设置某个信号的捕捉行为
+        - 参数：
+            - signum:要捕捉信号
+            - handler：捕捉到信号要如何处理
+                - SIG_IGN: 忽略信号
+                - SIG_DFL: 使用信号默认的行为
+                - 回调函数: 这个函数是内核调用 程序员只负责写 捕捉到信号后如何处理信号
+                回调函数：
+                    - 需要程序员实现，提前准备号的，函数的类型根据实际需求，看函数指针的定义
+                    - 不是程序员调用，而是当信号产生，由内核调用
+                    - 函数指针是实现回调的手段，函数实现之后，将函数名放在函数指针的位置
+        - 返回值:
+            成功，返回上一次注册的信号处理函数的地址，第一次调用返回NULL
+            失败, 返回SIG_ERR,设置错误号
+    The signals SIGKILL and SIGSTOP cannot be caught or ignored.
+    int sigaction(int signum, const struct sigaction *act,struct sigaction *oldact);
+        - 功能:检查或者改变信号的处理 信号捕捉
+        - 参数:
+            - signum:需要捕捉的信号的编号或者宏值
+            - *act: 捕捉到信号之后的处理动作
+            - oldact: 上一次对信号捕捉相关的设置 一般不适用 传递 NULL
+        - 返回值:
+            成功 0
+            失败 -1
+        struct sigaction {
+            //函数指针 指向的函数是信号捕捉到之后的处理函数
+            void     (*sa_handler)(int);
+            //函数指针 不常用
+            void     (*sa_sigaction)(int, siginfo_t *, void *);
+            //临时阻塞信号集 信号捕捉函数执行过程中 临时阻塞某些信号
+            sigset_t   sa_mask;
+            //使用哪一个信号处理对捕捉的信号进行处理
+            //这个值可以是0 表示使用 sa_handler 也可以是 SA_SIGINFO表示使用sa_sigaction 
+            int        sa_flags;
+            //被废弃掉了
+            void     (*sa_restorer)(void);
+        };
+        - 注意:应该尽量使用sigaction()因为signal()是ANSI美国国家标准定义的，有些架构已经废弃
+    SIGCHLD信号产生的条件
+        子进程终止时
+        子进程接收到 SIGSTOP 信号停止时
+        子进程处在停止态，接受到SIGCONT后唤醒时
+10 线程：
+    int pthread_create(pthread_t *thread, const pthread_attr_t *attr,void *(*start_routine) (void *), void *arg);
+        - 功能：创建一个子线程
+        - 参数：
+            - thread 传出参数 子线程的ID会写到这里
+            - attr   设置线程的属性 一般使用默认值 NULL
+            - start_routine: 函数指针 子线程需要处理的逻辑代码
+            - arg 给第三个参数使用 传参
+        - 返回值：
+            成功: 返回0
+            失败：返回错误号 这个错误号和之前的错误号不一样
+            获取错误号的信息 char* strerror(int errnum)
+    void pthread_exit(void *retval);
+        - 功能：终止一个线程 在哪个线程中调用 就表示终止哪个线程
+        - 参数：
+            retval:需要传递一个指针，作为一个返回值，可以在pthread_join()中找到
+    pthread_t pthread_self(void);
+        - 功能：获取当前线程的线程ID
+    int pthread_equal(pthread_t t1, pthread_t t2);
+        - 功能：比较两个线程id是否相等
+        不同的操作系统，pthread_t 类型的实现不一样，有的是无符号的长整型，有的是使用
+        结构体区实现的
+    int pthread_join(pthread_t thread, void **retval);
+        - 功能：和一个已经终止的线程进行连接回收子线程的资源 这个函数是阻塞函数,调用一次只能回收一个子线程
+                一般在主线程中使用
+        - 参数：
+            - thread：需要回收的子线程的id
+            - retval: 接受子线程退出时的返回值
+        -返回值：
+            - 成功：返回0
+            - 失败：strerror(num);
+    int pthread_detach(pthread_t thread);
+        - 功能：分离一个线程，被分离的线程在终止的时候，会自动释放资源返回给系统
+            1 不能多次分离，会产生不可预料的行为
+            2 不能去连接一个已经分离的线程，会报错
+        - 参数：
+            需要分离的线程的ID
+        - 返回值：
+            成功：返回0
+            失败：返回错误标识符
+    int pthread_cancel(pthread_t thread);
+        - 功能：取消线程(让线程终止)
+            取消某个线程，可以终止某个线程的运行，但不是立即终止，而是当子线程执行到一个取消点
+            线程才会终止，取消点：系统规定好的一些系统调用，我们可以初略额理解为用户区到内核区的切换，可以称为取消点
+    线程属性相关函数
+    int pthread_attr_init(pthread_attr_t *attr);
+        - 初始化线程属性变量
+    int pthread_attr_destroy(pthread_attr_t *attr);
+        - 释放线程属性的资源
+    int pthread_attr_getdetachstate(const pthread_attr_t *attr, int *detachstate);
+        - 获取线程分离的状态
+    int pthread_attr_setdetachstate(pthread_attr_t *attr, int detachstate);
+        - 设置线程分离的状态属性
+11 线程同步：
+    互斥量：
+    互斥量的类型 pthread_mutex_t
+    int pthread_mutex_init(pthread_mutex_t *restrict mutex, const pthread_mutexattr_t *restrict attr);
+        - 初始化互斥量
+        - 参数：
+            - mutex:需要初始化的互斥量变量
+            - attr:互斥量相关的属性,NULL
+        - restrict:C语言的修饰符，被修饰的指针不能由另外的指针进行操作
+            pthread_mutex_t *restrict mute = xxx;
+            pthread_mutex_t * mutex1 = mutex; 报错
+    int pthread_mutex_destroy(pthread_mutex_t *mutex);
+        - 释放互斥量的资源
+    int pthread_mutex_lock(pthread_mutex_t *mutex);
+        - 加锁 阻塞的 如果有一个线程加锁了 那么其他的线程只能阻塞等待
+    int pthread_mutex_trylock(pthread_mutex_t *mutex);
+        - 尝试加锁 如果加锁失败 不会阻塞 会直接返回
+    int pthread_mutex_unlock(pthread_mutex_t *mutex);
+        - 解锁
+    读写锁:
+    读写锁的类型 pthread_rwlock_t
+    int pthread_rwlock_init(pthread_rwlock_t *restrict rwlock, const pthread_rwlockattr_t *restrict attr);
+    int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+    int pthread_rwlock_rdlock(pthread_rwlock_t *rwlock);
+    int pthread_rwlock_tryrdlock(pthread_rwlock_t *rwlock);
+    int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
+    int pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
+    int pthread_rwlock_unlock(pthread_rwlock_t *rwlock);
+    条件变量：
+    条件变量的类型 pthread_cond_t
+    int pthread_cond_init(pthread_cond_t *restrict cond, const pthread_condattr_t *restrict attr);
+    int pthread_cond_destroy(pthread_cond_t *cond);
+    int pthread_cond_wait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex);
+        - 阻塞函数 调用该函数线程会阻塞 等待
+    int pthread_cond_timedwait(pthread_cond_t *restrict cond, pthread_mutex_t *restrict mutex, const struct timespec *restrict abstime);
+        - 等待多长时间 调用了这个函数 线程会阻塞 直到直到的时间结束
+    int pthread_cond_signal(pthread_cond_t *cond);
+        - 唤醒一个或者多个等地的线程
+    int pthread_cond_broadcast(pthread_cond_t *cond);
+        - 唤醒所有的等待的线程
+    信号量：
+    信号量的类型 sem_t
+    int sem_init(sem_t *sem, int pshared, unsigned int value);
+        - 功能 初始化一个信号量
+        - 参数：
+            - sem；信号量变量的地址
+            - pshared：用于区别这个信号量用于线程还是进程之间
+            - value：信号量中的值
+    int sem_destroy(sem_t *sem);
+        - 释放资源
+    int sem_wait(sem_t *sem);
+        - 对信号量的值减一 如果这个值为0 阻塞
+    int sem_trywait(sem_t *sem);
+    int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout);
+    int sem_post(sem_t *sem);
+        - 解锁一个信号量 调用一次 对信号量的值加一
+    int sem_getvalue(sem_t *sem, int *sval)
